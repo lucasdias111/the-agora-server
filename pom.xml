@@ -6,13 +6,13 @@
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>3.5.6</version>
-        <relativePath/> <!-- lookup parent from repository -->
+        <relativePath/>
     </parent>
-    <groupId>org.agora</groupId>
+    <groupId>org.theagora</groupId>
     <artifactId>server</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>agora</name>
-    <description>agora</description>
+    <description>server for the agora</description>
     <url/>
     <licenses>
         <license/>
@@ -28,9 +28,6 @@
     </scm>
     <properties>
         <java.version>25</java.version>
-        <db.url>jdbc:postgresql://localhost:5432/agoradb</db.url>
-        <db.username>[REPLACE_USERNAME]</db.username>
-        <db.password>[REPLACE_PASSWORD]</db.password>
     </properties>
     <dependencies>
         <dependency>
@@ -135,9 +132,6 @@
                 <artifactId>flyway-maven-plugin</artifactId>
                 <version>11.7.2</version>
                 <configuration>
-                    <url>${db.url}</url>
-                    <user>${db.username}</user>
-                    <password>${db.password}</password>
                     <locations>
                         <location>filesystem:src/main/resources/db/migration</location>
                     </locations>
