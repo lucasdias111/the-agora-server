@@ -1,5 +1,6 @@
 package org.agora.server.authentication.controllers;
 
+import lombok.extern.slf4j.Slf4j;
 import org.agora.server.authentication.models.AuthResponse;
 import org.agora.server.authentication.services.AuthenticationService;
 import org.slf4j.Logger;
@@ -12,9 +13,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/auth")
+@Slf4j
 public class AuthenticationController {
-
-    private static final Logger log = LoggerFactory.getLogger(AuthenticationController.class);
     private final AuthenticationService authService;
 
     public AuthenticationController(AuthenticationService authService) {

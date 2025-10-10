@@ -1,8 +1,8 @@
 package org.agora.server.authentication.services;
 
 import org.agora.server.authentication.models.AuthResponse;
-import org.agora.server.authentication.models.User;
-import org.agora.server.authentication.repositories.UserRepository;
+import org.agora.server.users.models.User;
+import org.agora.server.users.repositories.UserRepository;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.slf4j.Logger;

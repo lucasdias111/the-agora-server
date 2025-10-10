@@ -1,4 +1,4 @@
-package org.agora.server.authentication.models;
+package org.agora.server.users.models;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
