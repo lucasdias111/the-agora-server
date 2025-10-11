@@ -70,8 +70,8 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
         } else {
             handshaker.handshake(ctx.channel(), req).addListener(future -> {
                 if (future.isSuccess()) {
+                    clientService.broadcastUserLogin(userId);
                     clientService.addClient(userId, ctx.channel());
-                    // Broadcast that user is active to the rest of the online client list
                 }
             });
         }
@@ -185,6 +185,7 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
     public void channelInactive(ChannelHandlerContext ctx) {
         if (userId != null) {
             clientService.removeClient(userId);
+            clientService.broadcastUserLogout(userId);
             log.info("User {} disconnected", userId);
         }
     }
