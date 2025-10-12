@@ -26,8 +26,10 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class WebSocketServer {
     private static final Logger log = LoggerFactory.getLogger(WebSocketServer.class);
-    private static final Map<String, Set<Channel>> userConnections = new ConcurrentHashMap<>();
-    private static final ObjectMapper objectMapper = new ObjectMapper();
+
+    static {
+        new ObjectMapper();
+    }
 
     private EventLoopGroup bossGroup;
     private EventLoopGroup workerGroup;
@@ -92,7 +94,7 @@ public class WebSocketServer {
         if (workerGroup != null) {
             workerGroup.shutdownGracefully();
         }
-        userConnections.clear();
+        clientService.clearAllClients();
         log.info("WebSocket server shut down");
     }
 }

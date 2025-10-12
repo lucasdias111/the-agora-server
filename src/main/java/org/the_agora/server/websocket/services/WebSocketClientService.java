@@ -73,4 +73,8 @@ public class WebSocketClientService {
             log.error("Error broadcasting user logout: {}", e.getMessage());
         }
     }
+
+    public void clearAllClients() {
+        clients.clear();
+    }
 }
