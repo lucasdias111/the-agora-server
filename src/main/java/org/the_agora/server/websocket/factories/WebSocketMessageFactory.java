@@ -3,6 +3,7 @@ package org.the_agora.server.websocket.factories;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
+import org.the_agora.server.users.models.User;
 import org.the_agora.server.websocket.models.WebSocketMessage;
 import org.the_agora.server.websocket.models.WebSocketMessageType;
 
@@ -14,10 +15,10 @@ public class WebSocketMessageFactory {
         this.mapper = mapper;
     }
 
-    public String createUserActivity(WebSocketMessageType type, Long userId) throws JsonProcessingException {
+    public String createUserActivity(WebSocketMessageType type, User user) throws JsonProcessingException {
         WebSocketMessage message = new WebSocketMessage(
                 type,
-                userId,
+                user.toString(),
                 System.currentTimeMillis(),
                 null
         );

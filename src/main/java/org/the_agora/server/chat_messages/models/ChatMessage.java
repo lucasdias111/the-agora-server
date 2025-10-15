@@ -23,11 +23,11 @@ public class ChatMessage {
 
     @NotBlank
     @Column(nullable = false)
-    public Long fromUserId;
+    public String fromUserId;
 
     @NotBlank
     @Column(nullable = false)
-    public Long toUserId;
+    public String toUserId;
 
     @NotBlank
     @Size(min = 1, max = 5000)
@@ -42,7 +42,7 @@ public class ChatMessage {
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    public ChatMessage(Long userId, Long toUserId, String messageText) {
+    public ChatMessage(String userId, String toUserId, String messageText) {
         this.fromUserId = userId;
         this.toUserId = toUserId;
         this.message = messageText;

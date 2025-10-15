@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class WebSocketMessage {
     private WebSocketMessageType type;
-    private Long userId;
+    private String userJson;
     private Long timestamp;
     private String payload;
 }

@@ -146,7 +146,7 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
                     Long toUserId = message.get("toUserId").asLong();
                     String messageText = message.get("message").asText();
 
-                    sendMessageToUser(new ChatMessage(userId, toUserId, messageText));
+                    sendMessageToUser(new ChatMessage(userId.toString(), toUserId.toString(), messageText));
                 }
 
             } catch (Exception e) {
@@ -156,7 +156,7 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
     }
 
     private void sendMessageToUser(ChatMessage outboundMessage) {
-        Channel targetChannel = clientService.getClientChannel(outboundMessage.getToUserId());
+        Channel targetChannel = clientService.getClientChannel(Long.valueOf(outboundMessage.getToUserId()));
 
         if (targetChannel == null) {
             log.info("{} is not connected", outboundMessage.getToUserId());

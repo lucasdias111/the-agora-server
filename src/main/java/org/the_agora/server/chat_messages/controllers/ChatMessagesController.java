@@ -19,7 +19,7 @@ public class ChatMessagesController {
     }
 
     @GetMapping("get_chat_history")
-    public List<ChatMessage> getChatHistory(@RequestParam Long userId, @RequestParam Long toUserId) {
+    public List<ChatMessage> getChatHistory(@RequestParam String userId, @RequestParam String toUserId) {
         return chatMessageRepository.findByFromUserIdAndToUserIdOrderByCreatedAtDesc(userId,  toUserId);
     }
 }

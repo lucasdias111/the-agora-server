@@ -79,7 +79,7 @@ public class WebSocketServer {
             } finally {
                 shutdown();
             }
-        }, "netty-websocket-server").start();
+        }, "the-agora-websocket-server").start();
     }
 
     @PreDestroy
