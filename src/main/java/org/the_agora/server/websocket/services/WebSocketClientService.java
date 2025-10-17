@@ -7,6 +7,7 @@ import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.the_agora.server.users.models.User;
+import org.the_agora.server.users.models.UserDTO;
 import org.the_agora.server.websocket.factories.WebSocketMessageFactory;
 import org.the_agora.server.websocket.models.WebSocketMessageType;
 
@@ -41,7 +42,7 @@ public class WebSocketClientService {
         return clients.get(toUserId);
     }
 
-    public void broadcastUserLogin(User loggedInUser) {
+    public void broadcastUserLogin(UserDTO loggedInUser) {
         try {
             String messageJson = messageFactory.createUserActivity(WebSocketMessageType.USER_LOGIN, loggedInUser);
             TextWebSocketFrame frame = new TextWebSocketFrame(messageJson);
@@ -58,7 +59,7 @@ public class WebSocketClientService {
         }
     }
 
-    public void broadcastUserLogout(User loggedOutUser) {
+    public void broadcastUserLogout(UserDTO loggedOutUser) {
         try {
             String messageJson = messageFactory.createUserActivity(WebSocketMessageType.USER_LOGOUT, loggedOutUser);
             TextWebSocketFrame frame = new TextWebSocketFrame(messageJson);

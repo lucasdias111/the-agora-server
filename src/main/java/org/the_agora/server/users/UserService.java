@@ -1,9 +1,11 @@
 package org.the_agora.server.users;
 
+import org.springframework.stereotype.Service;
 import org.the_agora.server.users.models.User;
 import org.the_agora.server.users.models.UserDTO;
 import org.the_agora.server.users.repositories.UserRepository;
 
+@Service
 public class UserService {
     private UserRepository userRepository;
 

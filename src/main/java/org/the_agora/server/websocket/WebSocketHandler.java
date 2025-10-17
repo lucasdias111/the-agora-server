@@ -11,6 +11,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.the_agora.server.authentication.services.JwtService;
 import org.the_agora.server.chat_messages.models.ChatMessage;
 import org.the_agora.server.chat_messages.services.ChatMessageService;
+import org.the_agora.server.users.UserService;
+import org.the_agora.server.users.models.UserDTO;
 import org.the_agora.server.websocket.services.WebSocketClientService;
 
 import java.net.URI;
@@ -18,17 +20,20 @@ import java.net.URI;
 @Slf4j
 public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
     private WebSocketServerHandshaker handshaker;
-    private Long userId;
+    private UserDTO user;
     private final JwtService jwtService;
     private final WebSocketClientService clientService;
     private final ChatMessageService chatMessageService;
+    private final UserService userService;
 
     public WebSocketHandler(JwtService jwtService,
                             WebSocketClientService clientService,
-                            ChatMessageService chatMessageService) {
+                            ChatMessageService chatMessageService,
+                            UserService userService) {
         this.jwtService = jwtService;
         this.clientService = clientService;
         this.chatMessageService = chatMessageService;
+        this.userService = userService;
     }
 
     @Override
@@ -70,8 +75,8 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
         } else {
             handshaker.handshake(ctx.channel(), req).addListener(future -> {
                 if (future.isSuccess()) {
-                    clientService.broadcastUserLogin(userId);
-                    clientService.addClient(userId, ctx.channel());
+                    clientService.broadcastUserLogin(user);
+                    clientService.addClient(user.getId(), ctx.channel());
                 }
             });
         }
@@ -96,9 +101,9 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
             }
 
             String username = jwtService.extractUsername(token);
-            this.userId = jwtService.extractAllClaims(token).get("userId", Long.class);
+            this.user = userService.getUserById(jwtService.extractAllClaims(token).get("userId", Long.class));
 
-            log.info("WebSocket authenticated user: {} (id: {})", username, userId);
+            log.info("WebSocket authenticated user: {} (id: {})", username, user);
 
         } catch (Exception e) {
             log.error("JWT validation failed: {}", e.getMessage());
@@ -123,7 +128,7 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
 
     private void handleWebSocketFrame(ChannelHandlerContext ctx, WebSocketFrame frame) {
         if (frame instanceof CloseWebSocketFrame) {
-            log.info("Client requested close: {}", userId);
+            log.info("Client requested close: {}", user);
             handshaker.close(ctx.channel(), (CloseWebSocketFrame) frame.retain());
             return;
         }
@@ -135,7 +140,7 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
 
         if (frame instanceof TextWebSocketFrame) {
             String payload = ((TextWebSocketFrame) frame).text();
-            log.debug("Received message from {}: {}", userId, payload);
+            log.debug("Received message from {}: {}", user, payload);
 
             try {
                 ObjectMapper mapper = new ObjectMapper();
@@ -146,7 +151,7 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
                     Long toUserId = message.get("toUserId").asLong();
                     String messageText = message.get("message").asText();
 
-                    sendMessageToUser(new ChatMessage(userId.toString(), toUserId.toString(), messageText));
+                    sendMessageToUser(new ChatMessage(user.toString(), toUserId.toString(), messageText));
                 }
 
             } catch (Exception e) {
@@ -183,16 +188,16 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) {
-        if (userId != null) {
-            clientService.removeClient(userId);
-            clientService.broadcastUserLogout(userId);
-            log.info("User {} disconnected", userId);
+        if (user != null) {
+            clientService.removeClient(user.getId());
+            clientService.broadcastUserLogout(user);
+            log.info("User {} disconnected", user);
         }
     }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        log.error("WebSocket error for user {}: {}", userId, cause.getMessage());
+        log.error("WebSocket error for user {}: {}", user, cause.getMessage());
         ctx.close();
     }
 }

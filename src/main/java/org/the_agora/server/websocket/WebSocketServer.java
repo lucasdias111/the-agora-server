@@ -9,6 +9,7 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http.*;
 import org.the_agora.server.authentication.services.JwtService;
 import org.the_agora.server.chat_messages.services.ChatMessageService;
+import org.the_agora.server.users.UserService;
 import org.the_agora.server.websocket.services.WebSocketClientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,16 +38,19 @@ public class WebSocketServer {
     private final JwtService jwtService;
     private final WebSocketClientService clientService;
     private final ChatMessageService chatMessageService;
+    private final UserService userService;
 
     @Value("${websocket.port:8081}")
     private int port;
 
     public WebSocketServer(JwtService jwtService,
                            WebSocketClientService clientService,
-                           ChatMessageService chatMessageService) {
+                           ChatMessageService chatMessageService,
+                           UserService userService) {
         this.jwtService = jwtService;
         this.clientService = clientService;
         this.chatMessageService = chatMessageService;
+        this.userService = userService;
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -64,7 +68,7 @@ public class WebSocketServer {
                                 ch.pipeline().addLast(
                                         new HttpServerCodec(),
                                         new HttpObjectAggregator(65536),
-                                        new WebSocketHandler(jwtService, clientService, chatMessageService)
+                                        new WebSocketHandler(jwtService, clientService, chatMessageService, userService)
                                 );
                             }
                         })
