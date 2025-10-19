@@ -151,38 +151,12 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
                     Long toUserId = message.get("toUserId").asLong();
                     String messageText = message.get("message").asText();
 
-                    sendMessageToUser(new ChatMessage(user.toString(), toUserId.toString(), messageText));
+                    clientService.sendMessageToUser(new ChatMessage(user.getId(), toUserId, messageText));
                 }
 
             } catch (Exception e) {
                 log.error("Error handling message: {}", e.getMessage());
             }
-        }
-    }
-
-    private void sendMessageToUser(ChatMessage outboundMessage) {
-        Channel targetChannel = clientService.getClientChannel(Long.valueOf(outboundMessage.getToUserId()));
-
-        if (targetChannel == null) {
-            log.info("{} is not connected", outboundMessage.getToUserId());
-            return;
-        }
-
-        try {
-            String messageJson = outboundMessage.sendMessageToString();
-            TextWebSocketFrame frame = new TextWebSocketFrame(messageJson);
-
-            if (targetChannel.isActive()) {
-                targetChannel.writeAndFlush(frame.copy());
-                chatMessageService.saveMessage(outboundMessage);
-            } else {
-                log.debug("Channel inactive for user {}",
-                        outboundMessage.getToUserId());
-            }
-
-            frame.release();
-        } catch (Exception e) {
-            log.error("Error sending message: {}", e.getMessage());
         }
     }
 

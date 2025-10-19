@@ -1,12 +1,12 @@
 package org.the_agora.server.websocket.services;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.netty.channel.Channel;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.the_agora.server.users.models.User;
+import org.the_agora.server.chat_messages.models.ChatMessage;
+import org.the_agora.server.chat_messages.services.ChatMessageService;
 import org.the_agora.server.users.models.UserDTO;
 import org.the_agora.server.websocket.factories.WebSocketMessageFactory;
 import org.the_agora.server.websocket.models.WebSocketMessageType;
@@ -19,9 +19,11 @@ import java.util.concurrent.ConcurrentHashMap;
 public class WebSocketClientService {
     private final Map<Long, Channel> clients = new ConcurrentHashMap<>();
     private final WebSocketMessageFactory messageFactory;
+    private final ChatMessageService chatMessageService;
 
-    public WebSocketClientService(WebSocketMessageFactory messageFactory) {
+    public WebSocketClientService(WebSocketMessageFactory messageFactory, ChatMessageService chatMessageService) {
         this.messageFactory = messageFactory;
+        this.chatMessageService = chatMessageService;
     }
 
     public void addClient(Long id, Channel channel) {
@@ -73,6 +75,34 @@ public class WebSocketClientService {
             frame.release();
         } catch (Exception e) {
             log.error("Error broadcasting user logout: {}", e.getMessage());
+        }
+    }
+
+    public void sendMessageToUser(ChatMessage chatMessage) throws JsonProcessingException {
+
+        Channel targetChannel = getClientChannel(chatMessage.getToUserId());
+
+        if (targetChannel == null) {
+            log.info("{} is not connected", chatMessage.getToUserId());
+            return;
+        }
+
+        try {
+            String messageJson = messageFactory.createWebSocketChatMessage(chatMessage);
+
+            TextWebSocketFrame frame = new TextWebSocketFrame(messageJson);
+
+            if (targetChannel.isActive()) {
+                targetChannel.writeAndFlush(frame.copy());
+                chatMessageService.saveMessage(chatMessage);
+            } else {
+                log.debug("Channel inactive for user {}",
+                        chatMessage.getToUserId());
+            }
+
+            frame.release();
+        } catch (JsonProcessingException e) {
+            log.error("Error sending message: {}", e.getMessage());
         }
     }
 

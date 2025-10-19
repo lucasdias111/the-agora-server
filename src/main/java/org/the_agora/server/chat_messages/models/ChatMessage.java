@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -21,13 +22,13 @@ public class ChatMessage {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank
+    @NotNull
     @Column(nullable = false)
-    public String fromUserId;
+    public Long fromUserId;
 
-    @NotBlank
+    @NotNull
     @Column(nullable = false)
-    public String toUserId;
+    public Long toUserId;
 
     @NotBlank
     @Size(min = 1, max = 5000)
@@ -42,7 +43,7 @@ public class ChatMessage {
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    public ChatMessage(String userId, String toUserId, String messageText) {
+    public ChatMessage(Long userId, Long toUserId, String messageText) {
         this.fromUserId = userId;
         this.toUserId = toUserId;
         this.message = messageText;
