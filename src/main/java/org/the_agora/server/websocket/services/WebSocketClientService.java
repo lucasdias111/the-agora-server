@@ -78,7 +78,7 @@ public class WebSocketClientService {
         }
     }
 
-    public void sendMessageToUser(ChatMessage chatMessage) throws JsonProcessingException {
+    public void sendMessageToUser(ChatMessage chatMessage) {
 
         Channel targetChannel = getClientChannel(chatMessage.getToUserId());
 
