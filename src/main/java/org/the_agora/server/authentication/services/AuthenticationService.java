@@ -34,33 +34,25 @@ public class AuthenticationService {
 
         User user = userOptional.get();
 
-        if (!password.equals(user.getPassword())) { // TODO: Change to hashed passwords
+        if (!passwordEncoder.matches(password, user.getPassword())) {
             log.warn("Failed login attempt for user {}", username);
             throw new RuntimeException("Invalid credentials");
         }
 
-        User updatedUser = userRepository.save(user);
-
         String token = jwtService.generateToken(
-                updatedUser.getUsername(),
-                updatedUser.getId()
+                user.getUsername(),
+                user.getId()
         );
 
         log.info("User {} logged in successfully", username);
         return new AuthResponse(token, "Login successful");
     }
 
-    public User registerUser(String username, String password, String email) {
-        if (userRepository.existsByUsername(username)) {
-            throw new RuntimeException("Username already exists");
-        }
-
-        User newUser = new User();
-        newUser.setUsername(username);
-        newUser.setPassword(passwordEncoder.encode(password));
-        newUser.setEmail(email);
-        newUser.setCreatedAt(LocalDateTime.now());
-
-        return userRepository.save(newUser);
+    public User registerUser(String username, String email, String password) {
+        User user = new User();
+        user.setUsername(username);
+        user.setEmail(email);
+        user.setPassword(passwordEncoder.encode(password));
+        return userRepository.save(user);
     }
 }
