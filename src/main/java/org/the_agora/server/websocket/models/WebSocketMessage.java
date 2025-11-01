@@ -8,8 +8,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class WebSocketMessage {
-    private WebSocketMessageType type;
-    private String userJson;
-    private Long timestamp;
-    private String payload;
+	private WebSocketMessageType type;
+	private String userJson;
+	private Long timestamp;
+	private String payload;
 }

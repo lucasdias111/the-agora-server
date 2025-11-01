@@ -10,15 +10,15 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserDTO {
-    private Long id;
-    private String username;
-    private String email;
-    private LocalDateTime createdAt;
+	private Long id;
+	private String username;
+	private String email;
+	private LocalDateTime createdAt;
 
-    public UserDTO(User user) {
-        this.id = user.getId();
-        this.username = user.getUsername();
-        this.email = user.getEmail();
-        this.createdAt = user.getCreatedAt();
-    }
+	public UserDTO(User user) {
+		this.id = user.getId();
+		this.username = user.getUsername();
+		this.email = user.getEmail();
+		this.createdAt = user.getCreatedAt();
+	}
 }

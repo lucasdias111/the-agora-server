@@ -16,33 +16,30 @@ import java.util.List;
 @RequestMapping("/users")
 public class UsersController {
 
-    private final WebSocketClientService webSocketClientService;
-    private final UserService userService;
-    private final JwtService jwtService;
+	private final WebSocketClientService webSocketClientService;
+	private final UserService userService;
+	private final JwtService jwtService;
 
+	public UsersController(WebSocketClientService webSocketClientService, UserRepository userRepository,
+			UserService userService, JwtService jwtService) {
+		this.webSocketClientService = webSocketClientService;
+		this.userService = userService;
+		this.jwtService = jwtService;
+	}
 
-    public UsersController(WebSocketClientService webSocketClientService, UserRepository userRepository, UserService userService, JwtService jwtService) {
-        this.webSocketClientService = webSocketClientService;
-        this.userService = userService;
-        this.jwtService = jwtService;
-    }
+	@GetMapping("get_all_users")
+	public List<UserDTO> getAllOnlineUsersOnServer() {
+		return webSocketClientService.getAllClients().keySet().stream().map(userService::getUserById).toList();
+	}
 
-    @GetMapping("get_all_users")
-    public List<UserDTO> getAllOnlineUsersOnServer() {
-        return webSocketClientService.getAllClients().keySet()
-                .stream()
-                .map(userService::getUserById)
-                .toList();
-    }
+	@GetMapping("me")
+	public UserDTO getCurrentUser(@RequestHeader("Authorization") String authHeader) {
+		if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+			throw new IllegalArgumentException("Invalid authorization header");
+		}
 
-    @GetMapping("me")
-    public UserDTO getCurrentUser(@RequestHeader("Authorization") String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new IllegalArgumentException("Invalid authorization header");
-        }
-
-        String token = authHeader.substring(7);
-        Long userId = jwtService.extractUserId(token);
-        return userService.getUserById(userId);
-    }
+		String token = authHeader.substring(7);
+		Long userId = jwtService.extractUserId(token);
+		return userService.getUserById(userId);
+	}
 }

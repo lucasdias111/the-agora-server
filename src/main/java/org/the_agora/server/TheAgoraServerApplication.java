@@ -6,8 +6,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class TheAgoraServerApplication {
 
-    public static void main(String[] args) {
-        SpringApplication.run(TheAgoraServerApplication.class, args);
-    }
+	public static void main(String[] args) {
+		SpringApplication.run(TheAgoraServerApplication.class, args);
+	}
 
 }

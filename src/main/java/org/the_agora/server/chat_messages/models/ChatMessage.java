@@ -18,42 +18,42 @@ import java.util.Date;
 @Entity
 @Table(name = "chat_messages")
 public class ChatMessage {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
 
-    @NotNull
-    @Column(nullable = false)
-    public Long fromUserId;
+	@NotNull
+	@Column(nullable = false)
+	public Long fromUserId;
 
-    @NotNull
-    @Column(nullable = false)
-    public Long toUserId;
+	@NotNull
+	@Column(nullable = false)
+	public Long toUserId;
 
-    @NotBlank
-    @Size(min = 1, max = 5000)
-    @Column(nullable = false)
-    public String message;
+	@NotBlank
+	@Size(min = 1, max = 5000)
+	@Column(nullable = false)
+	public String message;
 
-    public Boolean isRead = false;
+	public Boolean isRead = false;
 
-    public Boolean isEdited = false;
+	public Boolean isEdited = false;
 
-    public Date createdAt;
+	public Date createdAt;
 
-    private static final ObjectMapper objectMapper = new ObjectMapper();
+	private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    public ChatMessage(Long userId, Long toUserId, String messageText) {
-        this.fromUserId = userId;
-        this.toUserId = toUserId;
-        this.message = messageText;
-    }
+	public ChatMessage(Long userId, Long toUserId, String messageText) {
+		this.fromUserId = userId;
+		this.toUserId = toUserId;
+		this.message = messageText;
+	}
 
-    public String sendMessageToString() {
-        try {
-            return objectMapper.writeValueAsString(this);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException("Failed to serialize message", e);
-        }
-    }
+	public String sendMessageToString() {
+		try {
+			return objectMapper.writeValueAsString(this);
+		} catch (JsonProcessingException e) {
+			throw new RuntimeException("Failed to serialize message", e);
+		}
+	}
 }

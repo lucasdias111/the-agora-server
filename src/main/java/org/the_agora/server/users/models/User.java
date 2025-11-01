@@ -1,6 +1,5 @@
 package org.the_agora.server.users.models;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
@@ -16,30 +15,30 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "users")
 public class User {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
 
-    @NotBlank
-    @Size(min = 3, max = 50)
-    @Column(unique = true, nullable = false)
-    private String username;
+	@NotBlank
+	@Size(min = 3, max = 50)
+	@Column(unique = true, nullable = false)
+	private String username;
 
-    @NotBlank
-    @Email
-    @Column(nullable = false)
-    private String email;
+	@NotBlank
+	@Email
+	@Column(nullable = false)
+	private String email;
 
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    @NotBlank
-    @Column(nullable = false)
-    private String password;
+	@JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+	@NotBlank
+	@Column(nullable = false)
+	private String password;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+	@Column(name = "created_at", nullable = false, updatable = false)
+	private LocalDateTime createdAt;
 
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-    }
+	@PrePersist
+	protected void onCreate() {
+		createdAt = LocalDateTime.now();
+	}
 }

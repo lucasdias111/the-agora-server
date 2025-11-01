@@ -11,31 +11,24 @@ import org.the_agora.server.websocket.models.WebSocketMessageType;
 
 @Component
 public class WebSocketMessageFactory {
-    private final ObjectMapper mapper;
-    private final UserService userService;
+	private final ObjectMapper mapper;
+	private final UserService userService;
 
-    public WebSocketMessageFactory(ObjectMapper mapper, UserService userService) {
-        this.mapper = mapper;
-        this.userService = userService;
-    }
+	public WebSocketMessageFactory(ObjectMapper mapper, UserService userService) {
+		this.mapper = mapper;
+		this.userService = userService;
+	}
 
-    public String createUserActivity(WebSocketMessageType type, UserDTO user) throws JsonProcessingException {
-        WebSocketMessage message = new WebSocketMessage(
-                type,
-                mapper.writeValueAsString(user),
-                System.currentTimeMillis(),
-                null
-        );
-        return mapper.writeValueAsString(message);
-    }
+	public String createUserActivity(WebSocketMessageType type, UserDTO user) throws JsonProcessingException {
+		WebSocketMessage message = new WebSocketMessage(type, mapper.writeValueAsString(user),
+				System.currentTimeMillis(), null);
+		return mapper.writeValueAsString(message);
+	}
 
-    public String createWebSocketChatMessage(ChatMessage chatMessage) throws JsonProcessingException {
-        WebSocketMessage message = new WebSocketMessage(
-                WebSocketMessageType.SEND_MESSAGE,
-                mapper.writeValueAsString(userService.getUserById(chatMessage.toUserId)),
-                System.currentTimeMillis(),
-                mapper.writeValueAsString(chatMessage)
-        );
-        return mapper.writeValueAsString(message);
-    }
+	public String createWebSocketChatMessage(ChatMessage chatMessage) throws JsonProcessingException {
+		WebSocketMessage message = new WebSocketMessage(WebSocketMessageType.SEND_MESSAGE,
+				mapper.writeValueAsString(userService.getUserById(chatMessage.toUserId)), System.currentTimeMillis(),
+				mapper.writeValueAsString(chatMessage));
+		return mapper.writeValueAsString(message);
+	}
 }
