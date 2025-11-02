@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.the_agora.server.authentication.services.JwtService;
 import org.the_agora.server.chat_messages.models.ChatMessage;
 import org.the_agora.server.chat_messages.services.ChatMessageService;
+import org.the_agora.server.config.FederationConfig;
 import org.the_agora.server.users.UserService;
 import org.the_agora.server.users.models.UserDTO;
 import org.the_agora.server.websocket.services.WebSocketClientService;
@@ -24,13 +25,15 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
 	private final WebSocketClientService clientService;
 	private final ChatMessageService chatMessageService;
 	private final UserService userService;
+    private final FederationConfig federationConfig;
 
 	public WebSocketHandler(JwtService jwtService, WebSocketClientService clientService,
-			ChatMessageService chatMessageService, UserService userService) {
+			ChatMessageService chatMessageService, UserService userService, FederationConfig federationConfig) {
 		this.jwtService = jwtService;
 		this.clientService = clientService;
 		this.chatMessageService = chatMessageService;
 		this.userService = userService;
+        this.federationConfig = federationConfig;
 	}
 
 	@Override
@@ -121,40 +124,59 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
 	}
 
 	private void handleWebSocketFrame(ChannelHandlerContext ctx, WebSocketFrame frame) {
-		if (frame instanceof CloseWebSocketFrame) {
-			log.info("Client requested close: {}", user);
-			handshaker.close(ctx.channel(), (CloseWebSocketFrame) frame.retain());
-			return;
-		}
-
-		if (frame instanceof PingWebSocketFrame) {
-			ctx.writeAndFlush(new PongWebSocketFrame(frame.content().retain()));
-			return;
-		}
-
-		if (frame instanceof TextWebSocketFrame) {
-			String payload = ((TextWebSocketFrame) frame).text();
-			log.debug("Received message from {}: {}", user, payload);
-
-			try {
-				ObjectMapper mapper = new ObjectMapper();
-				JsonNode message = mapper.readTree(payload);
-				String type = message.get("type").asText();
-
-				if ("SEND_MESSAGE".equals(type)) {
-					Long toUserId = message.get("toUserId").asLong();
-					String messageText = message.get("message").asText();
-
-					clientService.sendMessageToUser(new ChatMessage(user.getId(), toUserId, messageText));
-				}
-
-			} catch (Exception e) {
-				log.error("Error handling message: {}", e.getMessage());
-			}
-		}
+        switch (frame) {
+            case CloseWebSocketFrame closeWebSocketFrame -> {
+                log.info("Client requested close: {}", user);
+                handshaker.close(ctx.channel(), closeWebSocketFrame);
+            }
+            case PingWebSocketFrame pingWebSocketFrame -> {
+                ctx.writeAndFlush(pingWebSocketFrame);
+            }
+            case TextWebSocketFrame textWebSocketFrame -> {
+                handleTextWebSocketFrame(textWebSocketFrame);
+            }
+            default -> throw new IllegalStateException("Unexpected value: " + frame);
+        }
 	}
 
-	@Override
+    private void handleTextWebSocketFrame(TextWebSocketFrame textWebSocketFrame) {
+        String payload = textWebSocketFrame.text();
+        log.debug("Received message from {}: {}", user, payload);
+
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode message = mapper.readTree(payload);
+            String type = message.get("type").asText();
+
+            if ("SEND_MESSAGE".equals(type)) {
+                String toUserIdIdentifier = message.get("toUserId").asText();
+                String messageText = message.get("message").asText();
+
+                ChatMessage chatMessage = getChatMessage(toUserIdIdentifier, messageText);
+
+                clientService.sendMessageToUser(chatMessage);
+            }
+
+        } catch (Exception e) {
+            log.error("Error handling message: {}", e.getMessage());
+        }
+    }
+
+    private ChatMessage getChatMessage(String toUserIdIdentifier, String messageText) {
+        String[] parts = toUserIdIdentifier.split("@", 2);
+        Long toUserId = Long.parseLong(parts[0]);
+        String toUserServer = parts.length > 1 ? parts[1] : null;
+
+        return new ChatMessage(
+                user.getId(),
+                user.getServerDomain(),
+                toUserId,
+                toUserServer,
+                messageText
+        );
+    }
+
+    @Override
 	public void channelInactive(ChannelHandlerContext ctx) {
 		if (user != null) {
 			clientService.removeClient(user.getId());

@@ -27,7 +27,7 @@ public class WebSocketMessageFactory {
 
 	public String createWebSocketChatMessage(ChatMessage chatMessage) throws JsonProcessingException {
 		WebSocketMessage message = new WebSocketMessage(WebSocketMessageType.SEND_MESSAGE,
-				mapper.writeValueAsString(userService.getUserById(chatMessage.toUserId)), System.currentTimeMillis(),
+				mapper.writeValueAsString(userService.getUserById(chatMessage.getToUserId())), System.currentTimeMillis(),
 				mapper.writeValueAsString(chatMessage));
 		return mapper.writeValueAsString(message);
 	}

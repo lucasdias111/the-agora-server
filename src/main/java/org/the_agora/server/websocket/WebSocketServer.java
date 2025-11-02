@@ -9,6 +9,7 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http.*;
 import org.the_agora.server.authentication.services.JwtService;
 import org.the_agora.server.chat_messages.services.ChatMessageService;
+import org.the_agora.server.config.FederationConfig;
 import org.the_agora.server.users.UserService;
 import org.the_agora.server.websocket.services.WebSocketClientService;
 import org.slf4j.Logger;
@@ -35,16 +36,18 @@ public class WebSocketServer {
 	private final WebSocketClientService clientService;
 	private final ChatMessageService chatMessageService;
 	private final UserService userService;
+    private final FederationConfig federationConfig;
 
 	@Value("${websocket.port:8081}")
 	private int port;
 
 	public WebSocketServer(JwtService jwtService, WebSocketClientService clientService,
-			ChatMessageService chatMessageService, UserService userService) {
+			ChatMessageService chatMessageService, UserService userService, FederationConfig federationConfig) {
 		this.jwtService = jwtService;
 		this.clientService = clientService;
 		this.chatMessageService = chatMessageService;
 		this.userService = userService;
+        this.federationConfig = federationConfig;
 	}
 
 	@EventListener(ApplicationReadyEvent.class)
@@ -54,15 +57,24 @@ public class WebSocketServer {
 			workerGroup = new NioEventLoopGroup();
 			try {
 				ServerBootstrap b = new ServerBootstrap();
-				b.group(bossGroup, workerGroup).channel(NioServerSocketChannel.class)
+				b.group(bossGroup, workerGroup)
+                        .channel(NioServerSocketChannel.class)
 						.childHandler(new ChannelInitializer<SocketChannel>() {
 							@Override
 							protected void initChannel(SocketChannel ch) {
-								ch.pipeline().addLast(new HttpServerCodec(), new HttpObjectAggregator(65536),
-										new WebSocketHandler(jwtService, clientService, chatMessageService,
-												userService));
+								ch.pipeline()
+                                        .addLast(new HttpServerCodec(),
+                                                new HttpObjectAggregator(65536),
+                                                new WebSocketHandler(
+                                                        jwtService,
+                                                        clientService,
+                                                        chatMessageService,
+                                                        userService,
+                                                        federationConfig));
 							}
-						}).option(ChannelOption.SO_BACKLOG, 128).childOption(ChannelOption.SO_KEEPALIVE, true);
+						})
+                        .option(ChannelOption.SO_BACKLOG, 128)
+                        .childOption(ChannelOption.SO_KEEPALIVE, true);
 
 				serverChannel = b.bind(port).sync().channel();
 				log.info("WebSocket server started on port {}", port);

@@ -34,8 +34,20 @@ public class User {
 	@Column(nullable = false)
 	private String password;
 
+    @Column(name = "server_domain")
+    private String serverDomain;
+
 	@Column(name = "created_at", nullable = false, updatable = false)
 	private LocalDateTime createdAt;
+
+    @Column(name = "failed_login_attempts", nullable = false)
+    private Integer failedLoginAttempts = 0;
+
+    @Column(name = "last_failed_login_attempt")
+    private LocalDateTime lastFailedLoginAttempt;
+
+    @Column(name = "account_locked_until")
+    private LocalDateTime accountLockedUntil;
 
 	@PrePersist
 	protected void onCreate() {
