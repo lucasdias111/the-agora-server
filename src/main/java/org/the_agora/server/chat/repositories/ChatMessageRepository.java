@@ -1,8 +1,8 @@
-package org.the_agora.server.chat_messages.repositories;
+package org.the_agora.server.chat.repositories;
 
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.the_agora.server.chat_messages.models.ChatMessage;
+import org.the_agora.server.chat.models.ChatMessage;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

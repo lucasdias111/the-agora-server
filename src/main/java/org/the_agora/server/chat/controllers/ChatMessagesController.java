@@ -1,7 +1,7 @@
-package org.the_agora.server.chat_messages.controllers;
+package org.the_agora.server.chat.controllers;
 
-import org.the_agora.server.chat_messages.models.ChatMessage;
-import org.the_agora.server.chat_messages.repositories.ChatMessageRepository;
+import org.the_agora.server.chat.models.ChatMessage;
+import org.the_agora.server.chat.repositories.ChatMessageRepository;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;

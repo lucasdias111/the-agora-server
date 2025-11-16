@@ -1,10 +1,9 @@
 package org.the_agora.server.federation.controllers;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.the_agora.server.chat_messages.models.ChatMessage;
+import org.the_agora.server.chat.models.ChatMessage;
 import org.the_agora.server.config.FederationConfig;
 import org.the_agora.server.federation.models.FederatedMessageDTO;
 import org.the_agora.server.federation.models.FederationInfo;

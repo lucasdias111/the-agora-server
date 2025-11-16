@@ -4,7 +4,8 @@ CREATE TABLE users
     username                  VARCHAR(50)  NOT NULL UNIQUE,
     email                     VARCHAR(255) NOT NULL UNIQUE,
     password                  VARCHAR(255) NOT NULL,
-    server_domain             VARCHAR(255) NOT NULL, -- Add this
+    role                      VARCHAR(20)  NOT NULL DEFAULT 'USER',
+    server_domain             VARCHAR(255) NOT NULL,
     created_at                TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     failed_login_attempts     INTEGER      NOT NULL DEFAULT 0,
     last_failed_login_attempt TIMESTAMP,

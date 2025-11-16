@@ -1,4 +1,4 @@
-package org.the_agora.server.chat_messages.models;
+package org.the_agora.server.chat.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;

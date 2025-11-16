@@ -27,7 +27,7 @@
         <url/>
     </scm>
     <properties>
-        <java.version>25</java.version>
+        <java.version>25Z</java.version>
     </properties>
     <dependencies>
         <dependency>
@@ -49,12 +49,6 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
         </dependency>
 
         <dependency>
@@ -98,7 +92,10 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
-
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-configuration-processor</artifactId>
@@ -132,26 +129,22 @@
                     </excludes>
                 </configuration>
             </plugin>
+
             <plugin>
                 <groupId>org.flywaydb</groupId>
                 <artifactId>flyway-maven-plugin</artifactId>
                 <version>11.7.2</version>
                 <configuration>
+                    <url>jdbc:postgresql://localhost:5432/agoradb</url>
+                    <!--suppress UnresolvedMavenProperty -->
+                    <user>${env.DB_USERNAME}</user>
+                    <!--suppress UnresolvedMavenProperty -->
+                    <password>${env.DB_PASSWORD}</password>
+                    <cleanDisabled>false</cleanDisabled>
                     <locations>
                         <location>filesystem:src/main/resources/db/migration</location>
                     </locations>
-                    <schemas>
-                        <schema>public</schema>
-                    </schemas>
-                    <baselineOnMigrate>true</baselineOnMigrate>
                 </configuration>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.postgresql</groupId>
-                        <artifactId>postgresql</artifactId>
-                        <version>42.7.3</version>
-                    </dependency>
-                </dependencies>
             </plugin>
         </plugins>
     </build>

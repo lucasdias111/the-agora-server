@@ -3,7 +3,7 @@ package org.the_agora.server.websocket.factories;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
-import org.the_agora.server.chat_messages.models.ChatMessage;
+import org.the_agora.server.chat.models.ChatMessage;
 import org.the_agora.server.users.UserService;
 import org.the_agora.server.users.models.UserDTO;
 import org.the_agora.server.websocket.models.WebSocketMessage;

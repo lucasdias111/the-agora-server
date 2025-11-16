@@ -7,7 +7,7 @@ import org.the_agora.server.users.repositories.UserRepository;
 
 @Service
 public class UserService {
-	private UserRepository userRepository;
+	private final UserRepository userRepository;
 
 	public UserService(UserRepository userRepository) {
 		this.userRepository = userRepository;
@@ -17,4 +17,9 @@ public class UserService {
 		User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
 		return new UserDTO(user);
 	}
+
+    public UserDTO getUserByUsername(String username) {
+        User user = userRepository.findByUsername(username).orElseThrow(() -> new RuntimeException("User not found"));
+        return new UserDTO(user);
+    }
 }

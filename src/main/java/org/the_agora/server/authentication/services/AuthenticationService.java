@@ -1,70 +1,84 @@
 package org.the_agora.server.authentication.services;
 
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.the_agora.server.authentication.models.AuthResponse;
 import org.the_agora.server.config.FederationConfig;
 import org.the_agora.server.users.models.User;
 import org.the_agora.server.users.repositories.UserRepository;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
 
 @Service
+@Slf4j
 public class AuthenticationService {
-	private static final Logger log = LoggerFactory.getLogger(AuthenticationService.class);
     private static final int MAX_FAILED_ATTEMPTS = 3;
     private static final int LOCK_DURATION_SECONDS = 30;
 
-	private final UserRepository userRepository;
-	private final JwtService jwtService;
-	private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    private final AuthenticationManager authenticationManager;
+    private final UserRepository userRepository;
+    private final JwtService jwtService;
+    private final PasswordEncoder passwordEncoder;
     private final FederationConfig federationConfig;
 
-	public AuthenticationService(UserRepository userRepository, JwtService jwtService, FederationConfig federationConfig) {
-		this.userRepository = userRepository;
-		this.jwtService = jwtService;
+    public AuthenticationService(
+            AuthenticationManager authenticationManager,
+            UserRepository userRepository,
+            JwtService jwtService,
+            PasswordEncoder passwordEncoder,
+            FederationConfig federationConfig) {
+        this.authenticationManager = authenticationManager;
+        this.userRepository = userRepository;
+        this.jwtService = jwtService;
+        this.passwordEncoder = passwordEncoder;
         this.federationConfig = federationConfig;
-	}
+    }
 
-	public AuthResponse authenticateUser(String username, String password) {
-		Optional<User> userOptional = userRepository.findByUsername(username);
+    public AuthResponse authenticateUser(String username, String password) {
+        try {
+            User user = userRepository.findByUsername(username)
+                    .orElseThrow(() -> new BadCredentialsException("Invalid credentials"));
 
-        if (userOptional.isEmpty()) {
-            log.warn("Login attempt for non-existent user: {}", username);
-            throw new RuntimeException("Login attempt for non-existent user: " + username);
+            if (isAccountLocked(user)) {
+                throw new BadCredentialsException("Account is locked until " + user.getAccountLockedUntil());
+            }
+
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(username, password)
+            );
+
+            resetFailedAttempts(user);
+
+            String token = jwtService.generateToken(username, user.getId());
+
+            log.info("User {} authenticated successfully", username);
+
+            return new AuthResponse(true, "Login successful", username, token);
+
+        } catch (BadCredentialsException e) {
+            handleFailedLogin(username);
+            throw new BadCredentialsException("Invalid credentials");
+        }
+    }
+
+    public User registerUser(String username, String email, String password) {
+        if (userRepository.findByUsername(username).isPresent()) {
+            throw new IllegalArgumentException("Username already exists");
         }
 
-		User user = userOptional.get();
-
-        if (isAccountLocked(user)) {
-            log.warn("Login attempt for locked account: {}", username);
-        }
-
-        if (!passwordEncoder.matches(password, user.getPassword())) {
-            handleFailedLogin(user);
-            log.warn("Failed login attempt for user {} (attempt {}/{})",
-                    username, user.getFailedLoginAttempts(), MAX_FAILED_ATTEMPTS);
-        }
-
-        resetFailedAttempts(user);
-
-        String token = jwtService.generateToken(user.getUsername(), user.getId());
-
-        log.info("User {} logged in successfully", username);
-        return new AuthResponse(token, "Login successful");
-	}
-
-	public User registerUser(String username, String email, String password) {
-		User user = new User();
-		user.setUsername(username);
-		user.setEmail(email);
-		user.setPassword(passwordEncoder.encode(password));
+        User user = new User();
+        user.setUsername(username);
+        user.setEmail(email);
+        user.setPassword(passwordEncoder.encode(password));
         user.setServerDomain(federationConfig.getServerDomain());
-		return userRepository.save(user);
-	}
+        user.setRole("USER");
+
+        return userRepository.save(user);
+    }
 
     private boolean isAccountLocked(User user) {
         if (user.getAccountLockedUntil() == null) {
@@ -74,17 +88,19 @@ public class AuthenticationService {
         return user.getAccountLockedUntil().isAfter(LocalDateTime.now());
     }
 
-    private void handleFailedLogin(User user) {
-        user.setFailedLoginAttempts(user.getFailedLoginAttempts() + 1);
-        user.setLastFailedLoginAttempt(LocalDateTime.now());
+    private void handleFailedLogin(String username) {
+        userRepository.findByUsername(username).ifPresent(user -> {
+            user.setFailedLoginAttempts(user.getFailedLoginAttempts() + 1);
+            user.setLastFailedLoginAttempt(LocalDateTime.now());
 
-        if (user.getFailedLoginAttempts() >= MAX_FAILED_ATTEMPTS) {
-            user.setAccountLockedUntil(LocalDateTime.now().plusSeconds(LOCK_DURATION_SECONDS));
-            log.warn("Account locked for user {} until {}",
-                    user.getUsername(), user.getAccountLockedUntil());
-        }
+            if (user.getFailedLoginAttempts() >= MAX_FAILED_ATTEMPTS) {
+                user.setAccountLockedUntil(LocalDateTime.now().plusSeconds(LOCK_DURATION_SECONDS));
+                log.warn("Account locked for user {} until {}",
+                        user.getUsername(), user.getAccountLockedUntil());
+            }
 
-        userRepository.save(user);
+            userRepository.save(user);
+        });
     }
 
     private void resetFailedAttempts(User user) {

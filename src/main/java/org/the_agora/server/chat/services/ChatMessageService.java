@@ -1,7 +1,7 @@
-package org.the_agora.server.chat_messages.services;
+package org.the_agora.server.chat.services;
 
-import org.the_agora.server.chat_messages.models.ChatMessage;
-import org.the_agora.server.chat_messages.repositories.ChatMessageRepository;
+import org.the_agora.server.chat.models.ChatMessage;
+import org.the_agora.server.chat.repositories.ChatMessageRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
