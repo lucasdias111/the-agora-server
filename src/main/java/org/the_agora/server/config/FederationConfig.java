@@ -1,8 +1,10 @@
 package org.the_agora.server.config;
 
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+@Getter
 @Component
 public class FederationConfig {
 
@@ -12,11 +14,4 @@ public class FederationConfig {
     @Value("${federation.public-endpoint}")
     private String publicEndpoint;
 
-    public String getServerDomain() {
-        return serverDomain;
-    }
-
-    public String getPublicEndpoint() {
-        return publicEndpoint;
-    }
 }
