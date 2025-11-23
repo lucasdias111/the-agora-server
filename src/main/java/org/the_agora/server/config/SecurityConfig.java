@@ -40,6 +40,7 @@ public class SecurityConfig {
                         auth -> auth
                                 .requestMatchers("/auth/**").permitAll()
                                 .requestMatchers("/federation/**").permitAll()
+                                .requestMatchers("/.well-known/**").permitAll()
                                 .requestMatchers("/chat_messages/**").hasRole("USER")
                                 .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

@@ -5,11 +5,11 @@ import io.netty.channel.Channel;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.the_agora.server.chat.models.ChatMessage;
-import org.the_agora.server.chat.services.ChatMessageService;
+import org.the_agora.server.social.models.DirectMessage;
+import org.the_agora.server.social.services.ChatMessageService;
 import org.the_agora.server.config.FederationConfig;
 import org.the_agora.server.federation.services.FederationService;
-import org.the_agora.server.users.models.UserDTO;
+import org.the_agora.server.users.models.User;
 import org.the_agora.server.websocket.factories.WebSocketMessageFactory;
 import org.the_agora.server.websocket.models.WebSocketMessageType;
 
@@ -53,7 +53,7 @@ public class WebSocketClientService {
 		return clients.get(toUserId);
 	}
 
-	public void broadcastUserLogin(UserDTO loggedInUser) {
+	public void broadcastUserLogin(User loggedInUser) {
 		try {
 			String messageJson = messageFactory.createUserActivity(WebSocketMessageType.USER_LOGIN, loggedInUser);
 			TextWebSocketFrame frame = new TextWebSocketFrame(messageJson);
@@ -70,7 +70,7 @@ public class WebSocketClientService {
 		}
 	}
 
-	public void broadcastUserLogout(UserDTO loggedOutUser) {
+	public void broadcastUserLogout(User loggedOutUser) {
 		try {
 			String messageJson = messageFactory.createUserActivity(WebSocketMessageType.USER_LOGOUT, loggedOutUser);
 			TextWebSocketFrame frame = new TextWebSocketFrame(messageJson);
@@ -87,13 +87,13 @@ public class WebSocketClientService {
 		}
 	}
 
-    public void sendMessageToUser(ChatMessage chatMessage) {
-        String recipientServer = parseServerFromUserId(chatMessage.getToUserServer());
+    public void sendMessageToUser(DirectMessage directMessage) {
+        String recipientServer = parseServerFromUserId(directMessage.getToUserServer());
 
         if (isLocalUser(recipientServer)) {
-            deliverLocalMessage(chatMessage);
+            deliverLocalMessage(directMessage);
         } else {
-            deliverFederatedMessage(chatMessage, recipientServer);
+            deliverFederatedMessage(directMessage, recipientServer);
         }
     }
 
@@ -102,27 +102,27 @@ public class WebSocketClientService {
 	}
 
 
-    private void deliverLocalMessage(ChatMessage chatMessage) {
-        Channel targetChannel = getClientChannel(chatMessage.getToUserId());
+    private void deliverLocalMessage(DirectMessage directMessage) {
+        Channel targetChannel = getClientChannel(directMessage.getToUserId());
 
         if (targetChannel == null) {
-            log.debug("User {} is not connected, storing message for later", chatMessage.getToUserId());
+            log.debug("User {} is not connected, storing message for later", directMessage.getToUserId());
             // TODO: Send push notification for offline user
-            chatMessageService.saveMessage(chatMessage);
+            chatMessageService.saveMessage(directMessage);
             return;
         }
 
         try {
-            String messageJson = messageFactory.createWebSocketChatMessage(chatMessage);
+            String messageJson = messageFactory.createWebSocketChatMessage(directMessage);
             TextWebSocketFrame frame = new TextWebSocketFrame(messageJson);
 
             if (targetChannel.isActive()) {
                 targetChannel.writeAndFlush(frame.copy());
-                chatMessageService.saveMessage(chatMessage);
+                chatMessageService.saveMessage(directMessage);
             } else {
-                log.debug("Channel inactive for user {}", chatMessage.getToUserId());
+                log.debug("Channel inactive for user {}", directMessage.getToUserId());
                 // TODO: Send push notification for offline user
-                chatMessageService.saveMessage(chatMessage);
+                chatMessageService.saveMessage(directMessage);
             }
 
             frame.release();
@@ -131,17 +131,17 @@ public class WebSocketClientService {
         }
     }
 
-    private void deliverFederatedMessage(ChatMessage chatMessage, String targetServer) {
+    private void deliverFederatedMessage(DirectMessage directMessage, String targetServer) {
         log.info("Routing message to federated server: {}", targetServer);
 
-        if (chatMessage.getFromUserServer() == null) {
-            chatMessage.setFromUserServer(federationConfig.getServerDomain());
+        if (directMessage.getFromUserServer() == null) {
+            directMessage.setFromUserServer(federationConfig.getServerDomain());
         }
-        chatMessage.setToUserServer(targetServer);
+        directMessage.setToUserServer(targetServer);
 
-        chatMessageService.saveMessage(chatMessage);
+        chatMessageService.saveMessage(directMessage);
 
-        boolean success = federationService.sendFederatedMessage(chatMessage);
+        boolean success = federationService.sendFederatedMessage(directMessage);
         if (!success) {
             log.error("Failed to deliver federated message to {}", targetServer);
             // TODO: Mark message as failed, implement retry logic or callback the error to client

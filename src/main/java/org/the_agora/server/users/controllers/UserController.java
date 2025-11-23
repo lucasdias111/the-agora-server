@@ -25,12 +25,12 @@ public class UserController {
 
 	@GetMapping("get_all_users")
 	public List<UserDTO> getAllOnlineUsersOnServer() {
-		return webSocketClientService.getAllClients().keySet().stream().map(userService::getUserById).toList();
+		return webSocketClientService.getAllClients().keySet().stream().map(userService::getById).map(UserDTO::new).toList();
 	}
 
     @GetMapping("/me")
     public UserDTO getCurrentUser(Authentication authentication) {
         String username = authentication.getName();
-        return userService.getUserByUsername(username);
+        return new UserDTO(userService.getByUsername(username));
     }
 }

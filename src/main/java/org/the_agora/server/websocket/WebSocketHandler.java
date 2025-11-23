@@ -9,14 +9,14 @@ import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.websocketx.*;
 import lombok.extern.slf4j.Slf4j;
 import org.the_agora.server.authentication.services.JwtService;
-import org.the_agora.server.chat.models.ChatMessage;
-import org.the_agora.server.chat.services.ChatMessageService;
+import org.the_agora.server.social.models.DirectMessage;
+import org.the_agora.server.social.services.ChatMessageService;
 import org.the_agora.server.config.FederationConfig;
 import org.the_agora.server.users.UserService;
-import org.the_agora.server.users.models.UserDTO;
+import org.the_agora.server.users.models.User;
 import org.the_agora.server.websocket.services.WebSocketClientService;
 
-import java.net.URI;
+import java.util.Optional;
 
 @Slf4j
 @ChannelHandler.Sharable
@@ -62,11 +62,14 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
             return;
         }
 
-        UserDTO user = extractAndValidateJwtToken(ctx, uri);
-        if (user == null) {
+        Optional<User> optionalUser = jwtService.extractAndValidateJwtTokenFromWebSocket(uri);
+
+        if (optionalUser.isEmpty()) {
+            ctx.close();
             return;
         }
 
+        User user = optionalUser.get();
         ctx.channel().attr(WebSocketAttributes.USER).set(user);
 
         WebSocketServerHandshakerFactory wsFactory = new WebSocketServerHandshakerFactory(
@@ -76,68 +79,19 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
         if (handshaker == null) {
             WebSocketServerHandshakerFactory.sendUnsupportedVersionResponse(ctx.channel());
         } else {
-            // Store handshaker in channel attribute
             ctx.channel().attr(WebSocketAttributes.HANDSHAKER).set(handshaker);
 
             handshaker.handshake(ctx.channel(), req).addListener(future -> {
                 if (future.isSuccess()) {
-                    clientService.broadcastUserLogin(user);
                     clientService.addClient(user.getId(), ctx.channel());
+                    clientService.broadcastUserLogin(user);
                 }
             });
         }
     }
 
-    private UserDTO extractAndValidateJwtToken(ChannelHandlerContext ctx, String uri) {
-        try {
-            URI fullUri = new URI(uri);
-            String query = fullUri.getQuery();
-            String token = extractTokenFromQuery(query);
-
-            if (token == null || token.isEmpty()) {
-                log.warn("Missing token in WebSocket connection");
-                ctx.close();
-                return null;
-            }
-
-            String extractedUsername = jwtService.extractUsername(token);
-
-            if (!jwtService.isTokenValid(token, extractedUsername)) {
-                log.warn("Invalid or expired JWT token");
-                ctx.close();
-                return null;
-            }
-
-            String username = jwtService.extractUsername(token);
-            UserDTO user = userService.getUserById(
-                    jwtService.extractAllClaims(token).get("userId", Long.class)
-            );
-
-            log.info("WebSocket authenticated user: {} (id: {})", username, user);
-            return user;
-
-        } catch (Exception e) {
-            log.error("JWT validation failed: {}", e.getMessage());
-            ctx.close();
-            return null;
-        }
-    }
-
-    private String extractTokenFromQuery(String query) {
-        if (query == null) return null;
-
-        String[] pairs = query.split("&");
-        for (String pair : pairs) {
-            String[] keyValue = pair.split("=");
-            if (keyValue.length == 2 && "token".equals(keyValue[0])) {
-                return keyValue[1];
-            }
-        }
-        return null;
-    }
-
     private void handleWebSocketFrame(ChannelHandlerContext ctx, WebSocketFrame frame) {
-        UserDTO user = ctx.channel().attr(WebSocketAttributes.USER).get();
+        User user = ctx.channel().attr(WebSocketAttributes.USER).get();
         WebSocketServerHandshaker handshaker = ctx.channel().attr(WebSocketAttributes.HANDSHAKER).get();
 
         switch (frame) {
@@ -156,7 +110,7 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
     }
 
     private void handleTextWebSocketFrame(ChannelHandlerContext ctx, TextWebSocketFrame frame) {
-        UserDTO user = ctx.channel().attr(WebSocketAttributes.USER).get();
+        User user = ctx.channel().attr(WebSocketAttributes.USER).get();
         String payload = frame.text();
         log.debug("Received message from {}: {}", user, payload);
 
@@ -169,8 +123,8 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
                 String toUserIdIdentifier = message.get("toUserId").asText();
                 String messageText = message.get("message").asText();
 
-                ChatMessage chatMessage = getChatMessage(user, toUserIdIdentifier, messageText);
-                clientService.sendMessageToUser(chatMessage);
+                DirectMessage directMessage = getChatMessage(user, toUserIdIdentifier, messageText);
+                clientService.sendMessageToUser(directMessage);
             }
 
         } catch (Exception e) {
@@ -178,15 +132,15 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
         }
     }
 
-    private ChatMessage getChatMessage(UserDTO user, String toUserIdIdentifier, String messageText) {
+    private DirectMessage getChatMessage(User user, String toUserIdIdentifier, String messageText) {
         String[] parts = toUserIdIdentifier.split("@", 2);
-        Long toUserId = Long.parseLong(parts[0]);
+        User toUser = userService.getById(Long.parseLong(parts[0]));
         String toUserServer = parts.length > 1 ? parts[1] : null;
 
-        return new ChatMessage(
+        return new DirectMessage(
                 user.getId(),
+                toUser.getId(),
                 user.getServerDomain(),
-                toUserId,
                 toUserServer,
                 messageText
         );
@@ -194,7 +148,7 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) {
-        UserDTO user = ctx.channel().attr(WebSocketAttributes.USER).get();
+        User user = ctx.channel().attr(WebSocketAttributes.USER).get();
         if (user != null) {
             clientService.removeClient(user.getId());
             clientService.broadcastUserLogout(user);
@@ -204,7 +158,7 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        UserDTO user = ctx.channel().attr(WebSocketAttributes.USER).get();
+        User user = ctx.channel().attr(WebSocketAttributes.USER).get();
         log.error("WebSocket error for user {}: {}", user, cause.getMessage());
         ctx.close();
     }

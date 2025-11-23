@@ -1,7 +1,7 @@
-package org.the_agora.server.chat.controllers;
+package org.the_agora.server.social.controllers;
 
-import org.the_agora.server.chat.models.ChatMessage;
-import org.the_agora.server.chat.repositories.ChatMessageRepository;
+import org.the_agora.server.social.models.DirectMessage;
+import org.the_agora.server.social.repositories.ChatMessageRepository;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -21,15 +21,15 @@ public class ChatMessagesController {
 	}
 
 	@GetMapping("get_chat_history")
-	public List<ChatMessage> getChatHistory(@RequestParam Long userId, @RequestParam Long toUserId) {
-		List<ChatMessage> messagesFromUser = chatMessageRepository.findByFromUserIdAndToUserId(userId, toUserId);
-		List<ChatMessage> messagesToUser = chatMessageRepository.findByFromUserIdAndToUserId(toUserId, userId);
+	public List<DirectMessage> getChatHistory(@RequestParam Long userId, @RequestParam Long toUserId) {
+		List<DirectMessage> messagesFromUser = chatMessageRepository.findByFromUserIdAndToUserId(userId, toUserId);
+		List<DirectMessage> messagesToUser = chatMessageRepository.findByFromUserIdAndToUserId(toUserId, userId);
 
-		List<ChatMessage> allMessages = new ArrayList<>();
+		List<DirectMessage> allMessages = new ArrayList<>();
 		allMessages.addAll(messagesFromUser);
 		allMessages.addAll(messagesToUser);
 
-		allMessages.sort(Comparator.comparing(ChatMessage::getCreatedAt));
+		allMessages.sort(Comparator.comparing(DirectMessage::getCreatedAt));
 
 		return allMessages;
 	}

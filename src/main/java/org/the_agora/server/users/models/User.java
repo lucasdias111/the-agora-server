@@ -35,7 +35,7 @@ public class User {
 	private String password;
 
     @Column(nullable = false)
-    private String role = "USER";
+    private Role role = Role.USER;
 
     @Column(name = "server_domain")
     private String serverDomain;

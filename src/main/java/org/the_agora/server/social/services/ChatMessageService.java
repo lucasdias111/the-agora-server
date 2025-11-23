@@ -1,7 +1,7 @@
-package org.the_agora.server.chat.services;
+package org.the_agora.server.social.services;
 
-import org.the_agora.server.chat.models.ChatMessage;
-import org.the_agora.server.chat.repositories.ChatMessageRepository;
+import org.the_agora.server.social.models.DirectMessage;
+import org.the_agora.server.social.repositories.ChatMessageRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -14,7 +14,7 @@ public class ChatMessageService {
 		this.messageRepository = messageRepository;
 	}
 
-	public void saveMessage(ChatMessage message) {
+	public void saveMessage(DirectMessage message) {
 		message.setCreatedAt(new Date());
 		messageRepository.save(message);
 	}

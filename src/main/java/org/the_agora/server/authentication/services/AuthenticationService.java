@@ -7,6 +7,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.the_agora.server.authentication.models.AuthResponse;
 import org.the_agora.server.config.FederationConfig;
+import org.the_agora.server.users.models.Role;
 import org.the_agora.server.users.models.User;
 import org.the_agora.server.users.repositories.UserRepository;
 import org.springframework.stereotype.Service;
@@ -65,7 +66,7 @@ public class AuthenticationService {
         }
     }
 
-    public User registerUser(String username, String email, String password) {
+    public void registerUser(String username, String email, String password) {
         if (userRepository.findByUsername(username).isPresent()) {
             throw new IllegalArgumentException("Username already exists");
         }
@@ -75,9 +76,9 @@ public class AuthenticationService {
         user.setEmail(email);
         user.setPassword(passwordEncoder.encode(password));
         user.setServerDomain(federationConfig.getServerDomain());
-        user.setRole("USER");
+        user.setRole(Role.USER);
 
-        return userRepository.save(user);
+        userRepository.save(user);
     }
 
     private boolean isAccountLocked(User user) {

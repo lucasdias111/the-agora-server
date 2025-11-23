@@ -4,7 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import org.the_agora.server.chat.models.ChatMessage;
+import org.the_agora.server.social.models.DirectMessage;
 import org.the_agora.server.config.FederationConfig;
 import org.the_agora.server.federation.models.FederatedMessageDTO;
 import org.the_agora.server.federation.models.FederationInfo;
@@ -22,7 +22,7 @@ public class FederationService {
     /**
      * Send a message to a user on another server
      */
-    public boolean sendFederatedMessage(ChatMessage message) {
+    public boolean sendFederatedMessage(DirectMessage message) {
         try {
             String targetServerUrl = discoverServerEndpoint(message.getToUserServer());
 
@@ -68,7 +68,7 @@ public class FederationService {
         return "https://" + serverDomain;
     }
 
-    private FederatedMessageDTO toFederatedDTO(ChatMessage message) {
+    private FederatedMessageDTO toFederatedDTO(DirectMessage message) {
         return FederatedMessageDTO.builder()
                 .fromUserId(message.getFromUserId())
                 .fromServer(message.getFromUserServer() != null ?

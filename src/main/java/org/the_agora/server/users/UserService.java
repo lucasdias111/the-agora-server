@@ -2,7 +2,6 @@ package org.the_agora.server.users;
 
 import org.springframework.stereotype.Service;
 import org.the_agora.server.users.models.User;
-import org.the_agora.server.users.models.UserDTO;
 import org.the_agora.server.users.repositories.UserRepository;
 
 @Service
@@ -13,13 +12,11 @@ public class UserService {
 		this.userRepository = userRepository;
 	}
 
-	public UserDTO getUserById(Long id) {
-		User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
-		return new UserDTO(user);
+	public User getById(Long id) {
+		return userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
 	}
 
-    public UserDTO getUserByUsername(String username) {
-        User user = userRepository.findByUsername(username).orElseThrow(() -> new RuntimeException("User not found"));
-        return new UserDTO(user);
+    public User getByUsername(String username) {
+        return userRepository.findByUsername(username).orElseThrow(() -> new RuntimeException("User not found"));
     }
 }
