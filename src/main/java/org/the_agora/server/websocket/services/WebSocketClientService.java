@@ -6,7 +6,7 @@ import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.the_agora.server.social.models.DirectMessage;
-import org.the_agora.server.social.services.ChatMessageService;
+import org.the_agora.server.social.services.MessageService;
 import org.the_agora.server.config.FederationConfig;
 import org.the_agora.server.federation.services.FederationService;
 import org.the_agora.server.users.models.User;
@@ -21,16 +21,16 @@ import java.util.concurrent.ConcurrentHashMap;
 public class WebSocketClientService {
 	private final Map<Long, Channel> clients = new ConcurrentHashMap<>();
 	private final WebSocketMessageFactory messageFactory;
-	private final ChatMessageService chatMessageService;
+	private final MessageService messageService;
     private final FederationConfig federationConfig;
     private final FederationService federationService;
 
 	public WebSocketClientService(WebSocketMessageFactory messageFactory,
-                                  ChatMessageService chatMessageService,
+                                  MessageService messageService,
                                   FederationConfig federationConfig,
                                   FederationService federationService) {
 		this.messageFactory = messageFactory;
-		this.chatMessageService = chatMessageService;
+		this.messageService = messageService;
         this.federationConfig = federationConfig;
         this.federationService = federationService;
 	}
@@ -108,7 +108,7 @@ public class WebSocketClientService {
         if (targetChannel == null) {
             log.debug("User {} is not connected, storing message for later", directMessage.getToUserId());
             // TODO: Send push notification for offline user
-            chatMessageService.saveMessage(directMessage);
+            messageService.saveMessage(directMessage);
             return;
         }
 
@@ -118,11 +118,11 @@ public class WebSocketClientService {
 
             if (targetChannel.isActive()) {
                 targetChannel.writeAndFlush(frame.copy());
-                chatMessageService.saveMessage(directMessage);
+                messageService.saveMessage(directMessage);
             } else {
                 log.debug("Channel inactive for user {}", directMessage.getToUserId());
                 // TODO: Send push notification for offline user
-                chatMessageService.saveMessage(directMessage);
+                messageService.saveMessage(directMessage);
             }
 
             frame.release();
@@ -139,7 +139,7 @@ public class WebSocketClientService {
         }
         directMessage.setToUserServer(targetServer);
 
-        chatMessageService.saveMessage(directMessage);
+        messageService.saveMessage(directMessage);
 
         boolean success = federationService.sendFederatedMessage(directMessage);
         if (!success) {

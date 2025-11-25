@@ -14,8 +14,6 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import org.the_agora.server.authentication.services.JwtService;
-import org.the_agora.server.social.services.ChatMessageService;
-import org.the_agora.server.config.FederationConfig;
 import org.the_agora.server.users.UserService;
 import org.the_agora.server.websocket.services.WebSocketClientService;
 
@@ -28,9 +26,8 @@ public class WebSocketServer {
 
     private final JwtService jwtService;
     private final WebSocketClientService clientService;
-    private final ChatMessageService chatMessageService;
     private final UserService userService;
-    private final FederationConfig federationConfig;
+
 
     private EventLoopGroup bossGroup;
     private EventLoopGroup workerGroup;
@@ -38,14 +35,10 @@ public class WebSocketServer {
 
     public WebSocketServer(JwtService jwtService,
                            WebSocketClientService clientService,
-                           ChatMessageService chatMessageService,
-                           UserService userService,
-                           FederationConfig federationConfig) {
+                           UserService userService) {
         this.jwtService = jwtService;
         this.clientService = clientService;
-        this.chatMessageService = chatMessageService;
         this.userService = userService;
-        this.federationConfig = federationConfig;
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -90,7 +83,7 @@ public class WebSocketServer {
     }
 
     private WebSocketHandler createWebSocketHandler() {
-        return new WebSocketHandler(jwtService, clientService, chatMessageService, userService, federationConfig);
+        return new WebSocketHandler(jwtService, clientService, userService);
     }
 
     @PreDestroy

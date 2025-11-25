@@ -10,10 +10,9 @@ import io.netty.handler.codec.http.websocketx.*;
 import lombok.extern.slf4j.Slf4j;
 import org.the_agora.server.authentication.services.JwtService;
 import org.the_agora.server.social.models.DirectMessage;
-import org.the_agora.server.social.services.ChatMessageService;
-import org.the_agora.server.config.FederationConfig;
 import org.the_agora.server.users.UserService;
 import org.the_agora.server.users.models.User;
+import org.the_agora.server.websocket.models.WebSocketTextFrameTypes;
 import org.the_agora.server.websocket.services.WebSocketClientService;
 
 import java.util.Optional;
@@ -21,22 +20,17 @@ import java.util.Optional;
 @Slf4j
 @ChannelHandler.Sharable
 public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
+    private static final ObjectMapper MAPPER = new ObjectMapper();
     private final JwtService jwtService;
     private final WebSocketClientService clientService;
-    private final ChatMessageService chatMessageService;
     private final UserService userService;
-    private final FederationConfig federationConfig;
 
     public WebSocketHandler(JwtService jwtService,
                             WebSocketClientService clientService,
-                            ChatMessageService chatMessageService,
-                            UserService userService,
-                            FederationConfig federationConfig) {
+                            UserService userService) {
         this.jwtService = jwtService;
         this.clientService = clientService;
-        this.chatMessageService = chatMessageService;
         this.userService = userService;
-        this.federationConfig = federationConfig;
     }
 
     @Override
@@ -115,21 +109,39 @@ public class WebSocketHandler extends SimpleChannelInboundHandler<Object> {
         log.debug("Received message from {}: {}", user, payload);
 
         try {
-            ObjectMapper mapper = new ObjectMapper();
-            JsonNode message = mapper.readTree(payload);
-            String type = message.get("type").asText();
+            JsonNode message = parseMessage(payload);
+            WebSocketTextFrameTypes type = getMessageType(message);
 
-            if ("SEND_MESSAGE".equals(type)) {
-                String toUserIdIdentifier = message.get("toUserId").asText();
-                String messageText = message.get("message").asText();
-
-                DirectMessage directMessage = getChatMessage(user, toUserIdIdentifier, messageText);
-                clientService.sendMessageToUser(directMessage);
+            switch (type) {
+                case SEND_DIRECT_MESSAGE -> handleDirectMessage(user, message);
+                case SEND_CHANNEL_MESSAGE -> handleChannelMessage(user, message);
             }
 
+        } catch (IllegalArgumentException e) {
+            log.warn("Unknown message type from user {}: {}", user.getId(), e.getMessage());
         } catch (Exception e) {
-            log.error("Error handling message: {}", e.getMessage());
+            log.error("Error handling message from user {}: {}", user.getId(), e.getMessage());
         }
+    }
+
+    private JsonNode parseMessage(String payload) throws Exception {
+        return MAPPER.readTree(payload);
+    }
+
+    private WebSocketTextFrameTypes getMessageType(JsonNode message) {
+        return WebSocketTextFrameTypes.valueOf(message.get("type").asText());
+    }
+
+    private void handleDirectMessage(User user, JsonNode message) {
+        String toUserIdIdentifier = message.get("toUserId").asText();
+        String messageText = message.get("message").asText();
+
+        DirectMessage directMessage = getChatMessage(user, toUserIdIdentifier, messageText);
+        clientService.sendMessageToUser(directMessage);
+    }
+
+    private void handleChannelMessage(User user, JsonNode message) {
+        log.info("Received channel message from {}", user);
     }
 
     private DirectMessage getChatMessage(User user, String toUserIdIdentifier, String messageText) {

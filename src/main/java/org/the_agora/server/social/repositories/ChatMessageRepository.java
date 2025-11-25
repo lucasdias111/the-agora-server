@@ -11,11 +11,11 @@ import java.util.List;
 @Repository
 public interface ChatMessageRepository extends JpaRepository<DirectMessage, Long> {
 	@Query("""
-			SELECT cm
-			FROM DirectMessage cm
-			WHERE cm.fromUserId = :fromUserId
-			  AND cm.toUserId = :toUserId
-			ORDER BY cm.createdAt ASC
+			SELECT dm
+			FROM DirectMessage dm
+			WHERE dm.fromUserId = :fromUserId
+			  AND dm.toUserId = :toUserId
+			ORDER BY dm.createdAt ASC
 			""")
 	List<DirectMessage> findByFromUserIdAndToUserId(@Param("fromUserId") Long fromUserId,
                                                     @Param("toUserId") Long toUserId);
