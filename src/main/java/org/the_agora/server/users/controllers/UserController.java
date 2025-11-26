@@ -24,8 +24,15 @@ public class UserController {
 	}
 
 	@GetMapping("get_all_users")
-	public List<UserDTO> getAllOnlineUsersOnServer() {
-		return webSocketClientService.getAllClients().keySet().stream().map(userService::getById).map(UserDTO::new).toList();
+	public List<UserDTO> getAllOnlineUsersOnServer(Authentication authentication) {
+        String username = authentication.getName();
+		return webSocketClientService.getAllClients()
+                .keySet()
+                .stream()
+                .map(userService::getById)
+                .filter(user -> user.getUsername().equals(username))
+                .map(UserDTO::new)
+                .toList();
 	}
 
     @GetMapping("/me")
