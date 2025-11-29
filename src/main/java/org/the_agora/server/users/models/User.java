@@ -43,6 +43,12 @@ public class User {
 	@Column(name = "created_at", nullable = false, updatable = false)
 	private LocalDateTime createdAt;
 
+    @Column(length = 2048)
+    private String publicKey;
+
+    @Column(length = 4096)
+    private String encryptedPrivateKey;
+
     @Column(name = "failed_login_attempts", nullable = false)
     private Integer failedLoginAttempts = 0;
 

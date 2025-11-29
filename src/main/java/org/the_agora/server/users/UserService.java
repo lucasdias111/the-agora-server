@@ -19,4 +19,11 @@ public class UserService {
     public User getByUsername(String username) {
         return userRepository.findByUsername(username).orElseThrow(() -> new RuntimeException("User not found"));
     }
+
+    public void savePublicPrivateKeysForUser(Long userId, String publicKey, String encryptedPrivateKey) {
+        User user = getById(userId);
+        user.setPublicKey(publicKey);
+        user.setEncryptedPrivateKey(encryptedPrivateKey);
+        userRepository.save(user);
+    }
 }
