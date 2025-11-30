@@ -35,7 +35,7 @@ public class UserController {
                 .keySet()
                 .stream()
                 .map(userService::getById)
-                .filter(user -> user.getUsername().equals(username))
+                .filter(user -> !user.getUsername().equals(username))
                 .map(UserDTO::new)
                 .toList();
 	}

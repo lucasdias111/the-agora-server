@@ -53,39 +53,43 @@ public class WebSocketClientService {
 		return clients.get(toUserId);
 	}
 
-	public void broadcastUserLogin(User loggedInUser) {
-		try {
-			String messageJson = messageFactory.createUserActivity(WebSocketMessageType.USER_LOGIN, loggedInUser);
-			TextWebSocketFrame frame = new TextWebSocketFrame(messageJson);
+    public void broadcastUserLogin(User loggedInUser) {
+        try {
+            String messageJson = messageFactory.createUserActivity(WebSocketMessageType.USER_LOGIN, loggedInUser);
+            TextWebSocketFrame frame = new TextWebSocketFrame(messageJson);
 
-			for (Channel channel : clients.values()) {
-				if (channel.isActive()) {
-					channel.writeAndFlush(frame.copy());
-				}
-			}
+            Channel loggedInUserChannel = clients.get(loggedInUser.getId());
 
-			frame.release();
-		} catch (Exception e) {
-			log.error("Error broadcasting user login: {}", e.getMessage());
-		}
-	}
+            for (Channel channel : clients.values()) {
+                if (channel.isActive() && channel != loggedInUserChannel) {
+                    channel.writeAndFlush(frame.copy());
+                }
+            }
 
-	public void broadcastUserLogout(User loggedOutUser) {
-		try {
-			String messageJson = messageFactory.createUserActivity(WebSocketMessageType.USER_LOGOUT, loggedOutUser);
-			TextWebSocketFrame frame = new TextWebSocketFrame(messageJson);
+            frame.release();
+        } catch (Exception e) {
+            log.error("Error broadcasting user login: {}", e.getMessage());
+        }
+    }
 
-			for (Channel channel : clients.values()) {
-				if (channel.isActive()) {
-					channel.writeAndFlush(frame.copy());
-				}
-			}
+    public void broadcastUserLogout(User loggedOutUser) {
+        try {
+            String messageJson = messageFactory.createUserActivity(WebSocketMessageType.USER_LOGOUT, loggedOutUser);
+            TextWebSocketFrame frame = new TextWebSocketFrame(messageJson);
 
-			frame.release();
-		} catch (Exception e) {
-			log.error("Error broadcasting user logout: {}", e.getMessage());
-		}
-	}
+            Channel loggedOutUserChannel = clients.get(loggedOutUser.getId());
+
+            for (Channel channel : clients.values()) {
+                if (channel.isActive() && channel != loggedOutUserChannel) {
+                    channel.writeAndFlush(frame.copy());
+                }
+            }
+
+            frame.release();
+        } catch (Exception e) {
+            log.error("Error broadcasting user logout: {}", e.getMessage());
+        }
+    }
 
     public void sendMessageToUser(DirectMessage directMessage) {
         String recipientServer = parseServerFromUserId(directMessage.getToUserServer());
