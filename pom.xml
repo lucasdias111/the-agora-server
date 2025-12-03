@@ -8,11 +8,11 @@
         <version>3.5.6</version>
         <relativePath/>
     </parent>
-    <groupId>org.theagora</groupId>
+    <groupId>org.margin</groupId>
     <artifactId>server</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>agora</name>
-    <description>server for the agora</description>
+    <name>margin</name>
+    <description>server for margin</description>
     <url/>
     <licenses>
         <license/>
